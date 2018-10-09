@@ -1,9 +1,11 @@
 package com.sureshjoshi.android.kioskexample;
 
 import android.app.Activity;
+import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
@@ -120,9 +122,11 @@ public class MainActivity extends Activity {
             up = true;
         }
         if(up && down) {
-            stopLockTask();
-            mIsKioskEnabled = false;
-            mButton.setText(getString(R.string.enter_kiosk_mode));
+            KeyguardManager km  = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+            if (km.isKeyguardSecure()) {
+                Intent authIntent = km.createConfirmDeviceCredentialIntent(getString(R.string.dialog_title_auth), getString(R.string.dialog_msg_auth));
+                startActivityForResult(authIntent, 1234);
+            }
         }
         return true;
     }
@@ -134,5 +138,16 @@ public class MainActivity extends Activity {
             up = false;
         }
         return true;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == 1234) {
+            if (resultCode == RESULT_OK) {
+                stopLockTask();
+                mIsKioskEnabled = false;
+                mButton.setText(getString(R.string.enter_kiosk_mode));
+            }
+        }
     }
 }
